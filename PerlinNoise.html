@@ -56,7 +56,10 @@
             return 1.0 - nn / 1073741824.0;
         }
         function lerp(a, b, pos){
-            return a * pos + b * (1 - pos);
+            return a * (1 - pos) + b * pos;
+        }
+        function fade(t) {
+            return Math.pow(((6*t - 15)*t + 10)*t*t*t, 2);
         }
         class cell{
             constructor(canvas, perlin, x, y, width, height){
@@ -75,9 +78,9 @@
                 const dx = this.x % this.perlin.gridWidth;
                 const dy = this.y % this.perlin.gridHeight;
                 const v1 = new vector(dx, dy);
-                const v2 = new vector(1 - dx, dy);
-                const v3 = new vector(dx, 1 - dy);
-                const v4 = new vector(1-dx, 1-dy);
+                const v2 = new vector(dx - 1, dy);
+                const v3 = new vector(dx, dy - 1);
+                const v4 = new vector(dx - 1, dy - 1);
                 const col = Math.floor(this.x / this.perlin.gridWidth)
                 const row = Math.floor(this.y / this.perlin.gridHeight)
                 let topLeft = v1.dot(this.perlin.vectors[col][row]);
@@ -92,7 +95,7 @@
                 let bottomRight = v4.dot(this.perlin.vectors[col+1][row+1]);
                 bottomRight += Math.sqrt(2);
                 bottomRight /= 2*Math.sqrt(2);
-                this.value = lerp(lerp(topLeft, topRight, dx), lerp(bottomLeft, bottomRight, dx), dy);
+                this.value = lerp(lerp(topLeft, topRight, fade(dx)), lerp(bottomLeft, bottomRight, fade(dx)), fade(dy));
                 // console.log(" ------------------------------------")
                 // console.log(this.x, this.y, dx, dy)
                 // console.log(v1.dot(this.perlin.vectors[col][row]));
@@ -104,11 +107,14 @@
                 this.renderCorner(topRight, ctx2);
                 this.renderCorner(bottomLeft, ctx3)
                 this.renderCorner(bottomRight, ctx4)
-                this.renderCorner(lerp(topLeft, topRight, dx), ctx5)
-                this.renderCorner(lerp(bottomLeft, bottomRight, dx), ctx6);
+                this.renderCorner(lerp(topLeft, topRight, fade(dx)), ctx5)
+                this.renderCorner(lerp(bottomLeft, bottomRight, fade(dx)), ctx6);
             }
             render(){
-                const darkness = this.value * 255;
+                let darkness = this.value *  255;
+                // if(darkness < 0){
+                //     darkness = 0;
+                // }
                 ctx.fillStyle = `rgb(
                 ${Math.floor(darkness)},
                 ${Math.floor(darkness)},
@@ -119,7 +125,7 @@
                     , this.width * ratioX, this.height * ratioY);
             }
             renderCorner(value, context){
-                const darkness = value  * 255;
+                const darkness = value * 150;
                 context.fillStyle = `rgb(
                 ${Math.floor(darkness)},
                 ${Math.floor(darkness)},
@@ -167,7 +173,11 @@
                 for(let i = 0; i <= numx; i++){
                     this.vectors[i] = [];
                     for(let j = 0; j <= numy; j++){
-                        this.vectors[i][j] = new vector(PRNG(seed + numx * i + j));
+                        this.vectors[i][j] = new vector((PRNG(seed + numx * i + j)) * 2 * Math.PI)
+                        // this.vectors[i][j] = new vector(PRNG(seed + numx * i + j) , PRNG(seed + numy * i + j));
+                        // this.vectors[i][j] = new vector(Math.random());
+                        // this.vectors[i][j] = new vector((Math.random() - 0.5) * 5 , (Math.random() - 0.5) * 5)
+                        // this.vectors[i][j] = new vector( i % 2 + j % 8, j % 2)
                     }
                 }
             }
@@ -176,19 +186,43 @@
                     for(let j = 0; j <= this.numy; j++){
                         const posX = i * this.canvasWidth / this.numx;
                         const posY = j * this.canvasHeight / this.numy;
+                        const color = "blue"
                         this.context.moveTo(posX, posY);
                         this.context.lineTo(posX + this.vectors[i][j].dx * vectorLength, posY + this.vectors[i][j].dy * vectorLength);
-                        this.context.strokeStyle = "black";
+                        this.context.strokeStyle = color;
                         this.context.stroke();
+                        ctx1.moveTo(posX, posY);
+                        ctx1.lineTo(posX + this.vectors[i][j].dx * vectorLength, posY + this.vectors[i][j].dy * vectorLength);
+                        ctx1.strokeStyle = color
+                        ctx1.stroke();
+                        ctx2.moveTo(posX, posY);
+                        ctx2.lineTo(posX + this.vectors[i][j].dx * vectorLength, posY + this.vectors[i][j].dy * vectorLength);
+                        ctx2.strokeStyle = color;
+                        ctx2.stroke();
+                        ctx3.moveTo(posX, posY);
+                        ctx3.lineTo(posX + this.vectors[i][j].dx * vectorLength, posY + this.vectors[i][j].dy * vectorLength);
+                        ctx3.strokeStyle = color
+                        ctx3.stroke();
+                        ctx4.moveTo(posX, posY);
+                        ctx4.lineTo(posX + this.vectors[i][j].dx * vectorLength, posY + this.vectors[i][j].dy * vectorLength);
+                        ctx4.strokeStyle = color
+                        ctx4.stroke()
+                        ctx5.moveTo(posX, posY);
+                        ctx5.lineTo(posX + this.vectors[i][j].dx * vectorLength, posY + this.vectors[i][j].dy * vectorLength);
+                        ctx5.stroke();
+                        ctx6.moveTo(posX, posY);
+                        ctx6.lineTo(posX + this.vectors[i][j].dx * vectorLength, posY + this.vectors[i][j].dy * vectorLength);
+                        ctx6.strokeStyle = color
+                        ctx6.stroke();
                     }
                 }
             }
         }
-        const perl = new perlin(canvas, 10, 10, 10, 10, 123);
-        const grid = new Grid(canvas, perl, 0.2, 0.2);
+        const perl = new perlin(canvas, 3, 3, 3, 3, 123);
+        const grid = new Grid(canvas, perl, 0.05, 0.05);
         grid.update();
         grid.render();
-        perl.render(20);
+        perl.render(40);
     </script>
 </body>
 </html>
