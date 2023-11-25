@@ -5,30 +5,18 @@
     <title>Perlin Noise</title>
 </head>
 <body>
-    <canvas id="canvas1" width="1000" height="1000" style="border:1px solid #000;"></canvas>
-    <canvas id="canvas2" width="1000" height="1000" style="border:1px solid #000;"></canvas>
-    <canvas id="canvas3" width="1000" height="1000" style="border:1px solid #000;"></canvas>
-    <canvas id="canvas4" width="1000" height="1000" style="border:1px solid #000;"></canvas>
-    <div>____________________________________________________________________________</div>
-    <canvas id="canvas5" width="1000" height="1000" style="border:1px solid #000;"></canvas>
-    <canvas id="canvas6" width="1000" height="1000" style="border:1px solid #000;"></canvas>
+<!--    <canvas id="canvas1" width="1000" height="1000" style="border:1px solid #000;"></canvas>-->
+<!--    <canvas id="canvas2" width="1000" height="1000" style="border:1px solid #000;"></canvas>-->
+<!--    <canvas id="canvas3" width="1000" height="1000" style="border:1px solid #000;"></canvas>-->
+<!--    <canvas id="canvas4" width="1000" height="1000" style="border:1px solid #000;"></canvas>-->
+<!--    <div>____________________________________________________________________________</div>-->
+<!--    <canvas id="canvas5" width="1000" height="1000" style="border:1px solid #000;"></canvas>-->
+<!--    <canvas id="canvas6" width="1000" height="1000" style="border:1px solid #000;"></canvas>-->
     <div>____________________________________________________________________________</div>
     <canvas id="canvasFinal" width="1000" height="1000" style="border:1px solid #000;"></canvas>
     <script>
         const canvas = document.getElementById("canvasFinal");
         const ctx = canvas.getContext("2d");
-        const canvas1 = document.getElementById("canvas1");
-        const ctx1 = canvas1.getContext("2d")
-        const canvas2 = document.getElementById("canvas2");
-        const ctx2 = canvas2.getContext("2d")
-        const canvas3 = document.getElementById("canvas3");
-        const ctx3 = canvas3.getContext("2d")
-        const canvas4 = document.getElementById("canvas4");
-        const ctx4 = canvas4.getContext("2d")
-        const canvas5= document.getElementById("canvas5");
-        const ctx5 = canvas5.getContext("2d")
-        const canvas6 = document.getElementById("canvas6");
-        const ctx6 = canvas6.getContext("2d")
         class vector {
             constructor(arg1, arg2) {
                 if(arguments.length === 1){
@@ -44,7 +32,12 @@
                 else{
                     console.log("wrong number of inputs is passed into vector constructor")
                 }
-
+            }
+            update(angle){
+                this.angle += angle;
+                this.angle %= 2*Math.PI;
+                this.dx = Math.cos(this.angle);
+                this.dy = Math.sin(this.angle);
             }
             dot(vector){
                 return this.dx * vector.dx + this.dy * vector.dy;
@@ -96,12 +89,6 @@
                 bottomRight += Math.sqrt(2);
                 bottomRight /= 2*Math.sqrt(2);
                 this.value = lerp(lerp(topLeft, topRight, fade(dx)), lerp(bottomLeft, bottomRight, fade(dx)), fade(dy));
-                this.renderCorner(topLeft, ctx1);
-                this.renderCorner(topRight, ctx2);
-                this.renderCorner(bottomLeft, ctx3)
-                this.renderCorner(bottomRight, ctx4)
-                this.renderCorner(lerp(topLeft, topRight, fade(dx)), ctx5)
-                this.renderCorner(lerp(bottomLeft, bottomRight, fade(dx)), ctx6);
             }
             render(){
                 let darkness = this.value *  255;
@@ -167,17 +154,13 @@
                     this.vectors[i] = [];
                     for(let j = 0; j <= numy; j++){
                         this.vectors[i][j] = new vector((PRNG(seed + numx * i + j)) * 2 * Math.PI)
-                        // this.vectors[i][j] = new vector(PRNG(seed + numx * i + j) , PRNG(seed + numy * i + j));
-                        // this.vectors[i][j] = new vector(Math.random());
-                        // this.vectors[i][j] = new vector((Math.random() - 0.5) * 5 , (Math.random() - 0.5) * 5)
-                        // this.vectors[i][j] = new vector( i % 2 + j % 8, j % 2)
                     }
                 }
             }
             update(speed){
                 for(let i = 0; i <= this.numx; i++){
                     for(let j = 0; j <= this.numy; j++){
-                        this.vectors[i][j].angle += speed;
+                        this.vectors[i][j].update(speed);
                     }
                 }
             }
@@ -187,33 +170,11 @@
                         const posX = i * this.canvasWidth / this.numx;
                         const posY = j * this.canvasHeight / this.numy;
                         const color = "blue"
+                        this.context.beginPath();
                         this.context.moveTo(posX, posY);
                         this.context.lineTo(posX + this.vectors[i][j].dx * vectorLength, posY + this.vectors[i][j].dy * vectorLength);
                         this.context.strokeStyle = color;
                         this.context.stroke();
-                        ctx1.moveTo(posX, posY);
-                        ctx1.lineTo(posX + this.vectors[i][j].dx * vectorLength, posY + this.vectors[i][j].dy * vectorLength);
-                        ctx1.strokeStyle = color
-                        ctx1.stroke();
-                        ctx2.moveTo(posX, posY);
-                        ctx2.lineTo(posX + this.vectors[i][j].dx * vectorLength, posY + this.vectors[i][j].dy * vectorLength);
-                        ctx2.strokeStyle = color;
-                        ctx2.stroke();
-                        ctx3.moveTo(posX, posY);
-                        ctx3.lineTo(posX + this.vectors[i][j].dx * vectorLength, posY + this.vectors[i][j].dy * vectorLength);
-                        ctx3.strokeStyle = color
-                        ctx3.stroke();
-                        ctx4.moveTo(posX, posY);
-                        ctx4.lineTo(posX + this.vectors[i][j].dx * vectorLength, posY + this.vectors[i][j].dy * vectorLength);
-                        ctx4.strokeStyle = color
-                        ctx4.stroke()
-                        ctx5.moveTo(posX, posY);
-                        ctx5.lineTo(posX + this.vectors[i][j].dx * vectorLength, posY + this.vectors[i][j].dy * vectorLength);
-                        ctx5.stroke();
-                        ctx6.moveTo(posX, posY);
-                        ctx6.lineTo(posX + this.vectors[i][j].dx * vectorLength, posY + this.vectors[i][j].dy * vectorLength);
-                        ctx6.strokeStyle = color
-                        ctx6.stroke();
                     }
                 }
             }
@@ -226,7 +187,7 @@
         animate();
         function animate(){
             ctx.clearRect(0, 0, canvas.width, canvas.height)
-            perl.update(1000);
+            perl.update(0.01);
             grid.update()
             grid.render();
             perl.render(40);
