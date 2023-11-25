@@ -10,6 +10,9 @@
     <canvas id="canvas3" width="1000" height="1000" style="border:1px solid #000;"></canvas>
     <canvas id="canvas4" width="1000" height="1000" style="border:1px solid #000;"></canvas>
     <div>____________________________________________________________________________</div>
+    <canvas id="canvas5" width="1000" height="1000" style="border:1px solid #000;"></canvas>
+    <canvas id="canvas6" width="1000" height="1000" style="border:1px solid #000;"></canvas>
+    <div>____________________________________________________________________________</div>
     <canvas id="canvasFinal" width="1000" height="1000" style="border:1px solid #000;"></canvas>
     <script>
         const canvas = document.getElementById("canvasFinal");
@@ -22,6 +25,10 @@
         const ctx3 = canvas3.getContext("2d")
         const canvas4 = document.getElementById("canvas4");
         const ctx4 = canvas4.getContext("2d")
+        const canvas5= document.getElementById("canvas5");
+        const ctx5 = canvas5.getContext("2d")
+        const canvas6 = document.getElementById("canvas6");
+        const ctx6 = canvas6.getContext("2d")
         class vector {
             constructor(arg1, arg2) {
                 if(arguments.length === 1){
@@ -96,7 +103,9 @@
                 this.renderCorner(topLeft, ctx1);
                 this.renderCorner(topRight, ctx2);
                 this.renderCorner(bottomLeft, ctx3)
-                this.renderCorner(bottomRight, ctx4);
+                this.renderCorner(bottomRight, ctx4)
+                this.renderCorner(lerp(topLeft, topRight, dx), ctx5)
+                this.renderCorner(lerp(bottomLeft, bottomRight, dx), ctx6);
             }
             render(){
                 const darkness = this.value * 255;
