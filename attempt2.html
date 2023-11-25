@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Perlin Noise</title>
+</head>
+<body>
+    <canvas id="canvas1" width="1000" height="1000" style="border:1px solid #000;"></canvas>
+    <canvas id="canvas2" width="1000" height="1000" style="border:1px solid #000;"></canvas>
+    <canvas id="canvas3" width="1000" height="1000" style="border:1px solid #000;"></canvas>
+    <canvas id="canvas4" width="1000" height="1000" style="border:1px solid #000;"></canvas>
+    <div>____________________________________________________________________________</div>
+    <canvas id="canvasFinal" width="1000" height="1000" style="border:1px solid #000;"></canvas>
+    <script>
+        const canvas = document.getElementById("canvasFinal");
+        const ctx = canvas.getContext("2d");
+        const canvas1 = document.getElementById("canvas1");
+        const ctx1 = canvas1.getContext("2d")
+        const canvas2 = document.getElementById("canvas2");
+        const ctx2 = canvas2.getContext("2d")
+        const canvas3 = document.getElementById("canvas3");
+        const ctx3 = canvas3.getContext("2d")
+        const canvas4 = document.getElementById("canvas4");
+        const ctx4 = canvas4.getContext("2d")
+        class vector {
+            constructor(arg1, arg2) {
+                if(arguments.length === 1){
+                    this.angle = arg1;
+                    this.dx = Math.cos(this.angle);
+                    this.dy = Math.sin(this.angle);
+                }
+                else if(arguments.length === 2){
+                    this.dx = arg1;
+                    this.dy = arg2;
+                    this.angle = Math.atan2(this.dy, this.dx);
+                }
+                else{
+                    console.log("wrong number of inputs is passed into vector constructor")
+                }
+
+            }
+            dot(vector){
+                return this.dx * vector.dx + this.dy * vector.dy;
+            }
+        }
+        function PRNG(n){
+            n = (n >> 13) ^ n;
+            const nn = (n * (n * n * 60493 + 19990303) + 1376312589) & 0x7fffffff;
+            return 1.0 - nn / 1073741824.0;
+        }
+        function lerp(a, b, pos){
+            return a * pos + b * (1 - pos);
+        }
+        class cell{
+            constructor(canvas, perlin, x, y, width, height){
+                if(!canvas instanceof HTMLCanvasElement){
+                    console.log("canvas does not exist")
+                }
+                this.context = canvas.getContext("2d")
+                this.perlin = perlin;
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.value = 0;
+            }
+            update(){
+                const dx = this.x % this.perlin.gridWidth;
+                const dy = this.y % this.perlin.gridHeight;
+                const v1 = new vector(dx, dy);
+                const v2 = new vector(1 - dx, dy);
+                const v3 = new vector(dx, 1 - dy);
+                const v4 = new vector(1-dx, 1-dy);
+                const col = Math.floor(this.x / this.perlin.gridWidth)
+                const row = Math.floor(this.y / this.perlin.gridHeight)
+                let topLeft = v1.dot(this.perlin.vectors[col][row]);
+                topLeft += Math.sqrt(2)
+                topLeft /= 2* (Math.sqrt(2));
+                let topRight = v2.dot(this.perlin.vectors[col + 1][row]);
+                topRight += Math.sqrt(2);
+                topRight /= 2 * (Math.sqrt(2))
+                let bottomLeft = v3.dot(this.perlin.vectors[col][row+1]);
+                bottomLeft += Math.sqrt(2);
+                bottomLeft /= 2*Math.sqrt(2);
+                let bottomRight = v4.dot(this.perlin.vectors[col+1][row+1]);
+                bottomRight += Math.sqrt(2);
+                bottomRight /= 2*Math.sqrt(2);
+                this.value = lerp(lerp(topLeft, topRight, dx), lerp(bottomLeft, bottomRight, dx), dy);
+                // console.log(" ------------------------------------")
+                // console.log(this.x, this.y, dx, dy)
+                // console.log(v1.dot(this.perlin.vectors[col][row]));
+                // console.log(v2.dot(this.perlin.vectors[col + 1][row]));
+                // console.log(v3.dot(this.perlin.vectors[col][row+1]));
+                // console.log(v4.dot(this.perlin.vectors[col+1][row+1]));
+                // console.log(" ------------------------------------")
+                this.renderCorner(topLeft, ctx1);
+                this.renderCorner(topRight, ctx2);
+                this.renderCorner(bottomLeft, ctx3)
+                this.renderCorner(bottomRight, ctx4);
+            }
+            render(){
+                const darkness = this.value * 255;
+                ctx.fillStyle = `rgb(
+                ${Math.floor(darkness)},
+                ${Math.floor(darkness)},
+                ${Math.floor(darkness)}`;
+                const ratioX = this.perlin.canvasWidth / this.perlin.width;
+                const ratioY = this.perlin.canvasHeight / this.perlin.height;
+                this.context.fillRect(this.x * ratioX, this.y * ratioY
+                    , this.width * ratioX, this.height * ratioY);
+            }
+            renderCorner(value, context){
+                const darkness = value  * 255;
+                context.fillStyle = `rgb(
+                ${Math.floor(darkness)},
+                ${Math.floor(darkness)},
+                ${Math.floor(darkness)}`;
+                const ratioX = this.perlin.canvasWidth / this.perlin.width;
+                const ratioY = this.perlin.canvasHeight / this.perlin.height;
+                context.fillRect(this.x * ratioX, this.y * ratioY
+                    , this.width * ratioX, this.height * ratioY);
+            }
+        }
+        class Grid{
+            constructor(canvas, perlin, cellWidth, cellHeight){
+                this.canvas = canvas;
+                this.cells = [];
+                this.cellWidth = cellWidth;
+                this.cellHeight = cellHeight;
+                this.cellNumx = perlin.width / cellWidth;
+                this.cellNumy = perlin.height / cellHeight;
+                for(let i = 0; i < this.cellNumx; i++){
+                    for(let j = 0; j < this.cellNumy; j++){
+                        this.cells.push(new cell(this.canvas, perlin, i * this.cellWidth, j * this.cellHeight, this.cellWidth, this.cellHeight));
+                    }
+                }
+            }
+            update(){
+                this.cells.forEach(cell => cell.update());
+            }
+            render(){
+                this.cells.forEach(cell => cell.render());
+            }
+        }
+        // keep numx = width and numy = height so that the dot product would be bounded by [1, -1]
+        class perlin{
+            constructor(canvas, width, height, numx, numy, seed){
+                this.context = canvas.getContext("2d");
+                this.numx = numx;
+                this.numy = numy;
+                this.canvasWidth = canvas.width;
+                this.canvasHeight = canvas.height;
+                this.width = numx;
+                this.height = numy;
+                this.gridWidth = width / numx;
+                this.gridHeight = height / numy;
+                this.vectors = [];
+                for(let i = 0; i <= numx; i++){
+                    this.vectors[i] = [];
+                    for(let j = 0; j <= numy; j++){
+                        this.vectors[i][j] = new vector(PRNG(seed + numx * i + j));
+                    }
+                }
+            }
+            render(vectorLength){
+                for(let i = 0; i<= this.numx; i++){
+                    for(let j = 0; j <= this.numy; j++){
+                        const posX = i * this.canvasWidth / this.numx;
+                        const posY = j * this.canvasHeight / this.numy;
+                        this.context.moveTo(posX, posY);
+                        this.context.lineTo(posX + this.vectors[i][j].dx * vectorLength, posY + this.vectors[i][j].dy * vectorLength);
+                        this.context.strokeStyle = "black";
+                        this.context.stroke();
+                    }
+                }
+            }
+        }
+        const perl = new perlin(canvas, 10, 10, 10, 10, 123);
+        const grid = new Grid(canvas, perl, 0.2, 0.2);
+        grid.update();
+        grid.render();
+        perl.render(20);
+    </script>
+</body>
+</html>
